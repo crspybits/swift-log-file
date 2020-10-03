@@ -1,11 +1,15 @@
 # swift-log-file
 
+## Example: Just logging to a file
+
 ```
 let logFileURL = URL(/* your local log file here */)
 let logger = try FileLogHandler.fileLogger(label: "Foobar", localFile: logFileURL)
 
 logger.error("Test Test Test")
 ```
+
+## Example: Logging to both the standard output (Xcode console if using Xcode) and a file.
 
 ```
 let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
