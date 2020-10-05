@@ -14,6 +14,7 @@ final class swift_log_fileTests: XCTestCase {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
         let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
+        // Using `bootstrapInternal` so that running `swift test` won't fail. If using this in production code, just use `bootstrap`.
         LoggingSystem.bootstrapInternal(logFileHandler.handler)
 
         let logger = Logger(label: "Test")
@@ -26,6 +27,7 @@ final class swift_log_fileTests: XCTestCase {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
         let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
+        // Using `bootstrapInternal` so that running `swift test` won't fail. If using this in production code, just use `bootstrap`.
         LoggingSystem.bootstrapInternal(logFileHandler.handler)
         let logger = Logger(label: "Test")
         
