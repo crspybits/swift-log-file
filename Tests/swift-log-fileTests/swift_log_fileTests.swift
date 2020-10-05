@@ -1,14 +1,11 @@
 import XCTest
 @testable import FileLogging
-import Logging
+@testable import Logging
 
 enum TestError: Error {
     case noDocumentDirectory
     case cannotGetFileSize
 }
-
-// TESTING ALERT:
-// This must be tested manually, single test by single test, due to "logging system can only be initialized once per process." in the swift logger.
 
 final class swift_log_fileTests: XCTestCase {
     let logFileName = "LogFile.txt"
@@ -17,7 +14,8 @@ final class swift_log_fileTests: XCTestCase {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
         let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
-        LoggingSystem.bootstrap(logFileHandler.handler)
+        LoggingSystem.bootstrapInternal(logFileHandler.handler)
+
         let logger = Logger(label: "Test")
         
         // Not really an error.
@@ -28,7 +26,7 @@ final class swift_log_fileTests: XCTestCase {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
         let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
-        LoggingSystem.bootstrap(logFileHandler.handler)
+        LoggingSystem.bootstrapInternal(logFileHandler.handler)
         let logger = Logger(label: "Test")
         
         // Not really an error.
