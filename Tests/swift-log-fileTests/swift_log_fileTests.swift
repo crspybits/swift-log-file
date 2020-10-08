@@ -13,9 +13,9 @@ final class swift_log_fileTests: XCTestCase {
     func testLogToFileUsingBootstrap() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
-        let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
+        let fileLogger = try FileLogging(to: logFileURL)
         // Using `bootstrapInternal` so that running `swift test` won't fail. If using this in production code, just use `bootstrap`.
-        LoggingSystem.bootstrapInternal(logFileHandler.handler)
+        LoggingSystem.bootstrapInternal(fileLogger.handler)
 
         let logger = Logger(label: "Test")
         
@@ -26,9 +26,9 @@ final class swift_log_fileTests: XCTestCase {
     func testLogToFileAppendsAcrossLoggerCalls() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
-        let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
+        let fileLogger = try FileLogging(to: logFileURL)
         // Using `bootstrapInternal` so that running `swift test` won't fail. If using this in production code, just use `bootstrap`.
-        LoggingSystem.bootstrapInternal(logFileHandler.handler)
+        LoggingSystem.bootstrapInternal(fileLogger.handler)
         let logger = Logger(label: "Test")
         
         // Not really an error.
@@ -44,14 +44,13 @@ final class swift_log_fileTests: XCTestCase {
     func testLogToFileAppendsAcrossConstructorCalls() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
         print("\(logFileURL)")
-        
-        let logFileHandler1 = try FileLogHandler(label: "Foobar", localFile: logFileURL)
-        let logger1 = Logger(label: "Test", factory: logFileHandler1.handler)
+        let fileLogger = try FileLogging(to: logFileURL)
+
+        let logger1 = Logger(label: "Test", factory: fileLogger.handler)
         logger1.error("Test Test Test")
         let fileSize1 = try getFileSize(file: logFileURL)
         
-        let logFileHandler2 = try FileLogHandler(label: "Foobar", localFile: logFileURL)
-        let logger2 = Logger(label: "Test", factory: logFileHandler2.handler)
+        let logger2 = Logger(label: "Test", factory: fileLogger.handler)
         logger2.error("Test Test Test")
         let fileSize2 = try getFileSize(file: logFileURL)
         
@@ -61,31 +60,28 @@ final class swift_log_fileTests: XCTestCase {
     // Adapted from https://nshipster.com/swift-log/
     func testLogToBothFileAndConsole() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
+        let fileLogger = try FileLogging(to: logFileURL)
 
         LoggingSystem.bootstrap { label in
-            var handlers = [LogHandler]()
-            
-            // I would prefer if the `bootstrap` does a rethrow.
-            if let logFileHandler = try? FileLogHandler(label: label, localFile: logFileURL) {
-                handlers += [logFileHandler]
-            }
-            
-            handlers += [StreamLogHandler.standardOutput(label: label)]
+            let handlers:[LogHandler] = [
+                FileLogHandler(label: label, fileLogger: fileLogger),
+                StreamLogHandler.standardOutput(label: label)
+            ]
 
             return MultiplexLogHandler(handlers)
         }
         
         let logger = Logger(label: "Test")
         
-        // Manually check that the output also shows up in the Xcode console.
+        // TODO: Manually check that the output also shows up in the Xcode console.
         logger.error("Test Test Test")
     }
     
     func testLoggingUsingLoggerFactoryConstructor() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
+        let fileLogger = try FileLogging(to: logFileURL)
 
-        let logFileHandler = try FileLogHandler(label: "Foobar", localFile: logFileURL)
-        let logger = Logger(label: "Test", factory: logFileHandler.handler)
+        let logger = Logger(label: "Test", factory: fileLogger.handler)
         
         logger.error("Test Test Test")
         let fileSize1 = try getFileSize(file: logFileURL)
@@ -98,7 +94,8 @@ final class swift_log_fileTests: XCTestCase {
     
     func testLoggingUsingConvenienceMethod() throws {
         let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
-        let logger = try FileLogHandler.fileLogger(label: "Foobar", localFile: logFileURL)
+
+        let logger = try FileLogging.logger(label: "Foobar", localFile: logFileURL)
         
         logger.error("Test Test Test")
         let fileSize1 = try getFileSize(file: logFileURL)

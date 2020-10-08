@@ -30,16 +30,33 @@ struct FileHandlerOutputStream: TextOutputStream {
     }
 }
 
+public struct FileLogging {
+    let stream: TextOutputStream
+    private var localFile: URL
+    
+    public init(to localFile: URL) throws {
+        self.stream = try FileHandlerOutputStream(localFile: localFile)
+        self.localFile = localFile
+    }
+    
+    public func handler(label: String) -> FileLogHandler {
+        return FileLogHandler(label: label, fileLogger: self)
+    }
+    
+    public static func logger(label: String, localFile url: URL) throws -> Logger {
+        let logging = try FileLogging(to: url)
+        return Logger(label: label, factory: logging.handler)
+    }
+}
+
 // Adapted from https://github.com/apple/swift-log.git
-// Changed from using a struct to using a class because of: error: Partial application of 'mutating' method is not allowed
-// when I try to do: `LoggingSystem.bootstrap(logFileHandler.handler)`
         
 /// `FileLogHandler` is a simple implementation of `LogHandler` for directing
 /// `Logger` output to a local file. Appends log output to this file, even across constructor calls.
-public class FileLogHandler: LogHandler {
+public struct FileLogHandler: LogHandler {
     private let stream: TextOutputStream
     private var label: String
-
+    
     public var logLevel: Logger.Level = .info
 
     private var prettyMetadata: String?
@@ -58,20 +75,14 @@ public class FileLogHandler: LogHandler {
         }
     }
     
-    public static func fileLogger(label: String, localFile url: URL) throws -> Logger {
-        let logFileHandler = try FileLogHandler(label: label, localFile: url)
-        return Logger(label: label, factory: logFileHandler.handler)
+    public init(label: String, fileLogger: FileLogging) {
+        self.label = label
+        self.stream = fileLogger.stream
     }
 
     public init(label: String, localFile url: URL) throws {
         self.label = label
         self.stream = try FileHandlerOutputStream(localFile: url)
-    }
-
-    // Necessary because the factory method used in the swift logger doesn't allow a throwing constructor.
-    public func handler(label: String) -> LogHandler {
-        self.label = label
-        return self
     }
 
     public func log(level: Logger.Level,
