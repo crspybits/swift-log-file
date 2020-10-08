@@ -6,8 +6,7 @@
 
 ```swift
 let logFileURL = URL(/* your local log file here */)
-let logger = try FileLogHandler.fileLogger(label: "Foobar", localFile: logFileURL)
-
+let logger = try FileLogging.logger(label: "Foobar", localFile: logFileURL)
 logger.error("Test Test Test")
 ```
 
@@ -15,15 +14,13 @@ logger.error("Test Test Test")
 
 ```swift
 let logFileURL = try getDocumentsDirectory().appendingPathComponent(logFileName)
+let fileLogger = try FileLogging(to: logFileURL)
 
 LoggingSystem.bootstrap { label in
-    var handlers = [LogHandler]()
-    
-    if let logFileHandler = try? FileLogHandler(label: label, localFile: logFileURL) {
-        handlers += [logFileHandler]
-    }
-    
-    handlers += [StreamLogHandler.standardOutput(label: label)]
+    let handlers:[LogHandler] = [
+        FileLogHandler(label: label, fileLogger: fileLogger),
+        StreamLogHandler.standardOutput(label: label)
+    ]
 
     return MultiplexLogHandler(handlers)
 }
