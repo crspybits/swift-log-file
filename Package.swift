@@ -12,15 +12,20 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+        .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.0")
     ],
     targets: [
         .target(
             name: "FileLogging",
             dependencies: [
+                "XCGLogger",
                 .product(name: "Logging", package: "swift-log")
             ]),
         .testTarget(
             name: "swift-log-fileTests",
-            dependencies: ["FileLogging"]),
+            dependencies: [
+                "FileLogging",
+                "XCGLogger"
+            ]),
     ]
 )
