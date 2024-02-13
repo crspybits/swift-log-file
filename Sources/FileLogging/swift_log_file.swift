@@ -7,25 +7,24 @@ struct FileHandlerOutputStream: TextOutputStream {
         case couldNotCreateFile
     }
     
-    private let fileHandle: FileHandle
+    private let url: URL
     let encoding: String.Encoding
-
-    init(localFile url: URL, encoding: String.Encoding = .utf8) throws {
-        if !FileManager.default.fileExists(atPath: url.path) {
-            guard FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil) else {
-                throw FileHandlerOutputStream.couldNotCreateFile
-            }
-        }
-        
-        let fileHandle = try FileHandle(forWritingTo: url)
-        fileHandle.seekToEndOfFile()
-        self.fileHandle = fileHandle
+    
+    init(localFile url: URL, encoding: String.Encoding = .utf8) {
+        self.url = url
         self.encoding = encoding
     }
 
     mutating func write(_ string: String) {
         if let data = string.data(using: encoding) {
-            fileHandle.write(data)
+            if !FileManager.default.fileExists(atPath: url.path) {
+                FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil)
+            }
+            
+            if let fileHandle = try? FileHandle(forWritingTo: url) {
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+            }
         }
     }
 }
